@@ -28,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight-decay', type=float, default=0.0005)
     parser.add_argument('--save-epoch', type=int, default=300)
     parser.add_argument('--save-path', default='save/gcn-basic')
+    parser.add_argument('--k', type=int, default=1)
 
     parser.add_argument('--gpu', default='0')
 
@@ -37,6 +38,7 @@ if __name__ == '__main__':
     set_gpu(args.gpu)
 
     save_path = args.save_path
+    save_path += '-k={}'.format(args.k)
     ensure_path(save_path)
 
     graph = json.load(open('materials/imagenet-induced-graph.json', 'r'))
@@ -58,7 +60,7 @@ if __name__ == '__main__':
     fc_vectors = F.normalize(fc_vectors)
 
     hidden_layers = 'd2048,d'
-    gcn = GCN(n, edges, word_vectors.shape[1], fc_vectors.shape[1], hidden_layers).cuda()
+    gcn = GCN(n, edges, word_vectors.shape[1], fc_vectors.shape[1], hidden_layers, k=args.k).cuda()
 
     print('{} nodes, {} edges'.format(n, len(edges)))
     print('word vectors:', word_vectors.shape)

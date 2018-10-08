@@ -11,7 +11,7 @@ from utils import normt_spm, spm_to_tensor
 
 class GraphConv(nn.Module):
 
-    def __init__(self, in_channels, out_channels, dropout=False, relu=True):
+    def __init__(self, in_channels, out_channels, dropout=False, relu=True, k=1):
         super().__init__()
 
         if dropout:
@@ -21,6 +21,7 @@ class GraphConv(nn.Module):
 
         self.w = nn.Parameter(torch.empty(in_channels, out_channels))
         self.b = nn.Parameter(torch.zeros(out_channels))
+        self.k = k
         xavier_uniform_(self.w)
 
         if relu:
@@ -32,7 +33,10 @@ class GraphConv(nn.Module):
         if self.dropout is not None:
             inputs = self.dropout(inputs)
 
-        outputs = torch.mm(adj, torch.mm(inputs, self.w)) + self.b
+        inputs = torch.mm(inputs, self.w)
+        for _ in range(self.k):
+            inputs = torch.mm(adj, inputs)
+        outputs = inputs + self.b
 
         if self.relu is not None:
             outputs = self.relu(outputs)
@@ -41,7 +45,7 @@ class GraphConv(nn.Module):
 
 class GCN(nn.Module):
 
-    def __init__(self, n, edges, in_channels, out_channels, hidden_layers):
+    def __init__(self, n, edges, in_channels, out_channels, hidden_layers, k=1):
         super().__init__()
 
         edges = np.array(edges)
@@ -76,7 +80,7 @@ class GCN(nn.Module):
 
             last_c = c
 
-        conv = GraphConv(last_c, out_channels, relu=False, dropout=dropout_last)
+        conv = GraphConv(last_c, out_channels, relu=False, dropout=dropout_last, k=k)
         self.add_module('conv-last', conv)
         layers.append(conv)
 
