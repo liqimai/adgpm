@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     hidden_layers = 'd2048,d'
     gcn = GCN(n, edges, word_vectors.shape[1], fc_vectors.shape[1], hidden_layers, k=args.k).cuda()
-
+    print(gcn)
     print('{} nodes, {} edges'.format(n, len(edges)))
     print('word vectors:', word_vectors.shape)
     print('fc vectors:', fc_vectors.shape)

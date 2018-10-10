@@ -4,9 +4,36 @@ import scipy.sparse as sp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Function
 from torch.nn.init import xavier_uniform_
 
 from utils import normt_spm, spm_to_tensor
+
+class GraphConvFunction(Function):
+
+    @staticmethod
+    def forward(ctx, adj, x, k):
+        ctx.conv_k = k
+        ctx.save_for_backward(adj)
+        for _ in range(k):
+            x = torch.mm(adj, x)
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        adj, = ctx.saved_tensors
+        k = ctx.conv_k
+        assert ctx.needs_input_grad[0] == False, "Gradients of adj is not supported."
+        assert ctx.needs_input_grad[2] == False, "Gradients of k is not supported."
+
+        grad_x = None
+        if ctx.needs_input_grad[1]:
+            adj_t = adj.t()
+            grad_x = grad_output
+            for _ in range(k):
+                grad_x = torch.mm(adj_t, grad_x)
+
+        return None, grad_x, None
 
 
 class GraphConv(nn.Module):
@@ -34,14 +61,17 @@ class GraphConv(nn.Module):
             inputs = self.dropout(inputs)
 
         inputs = torch.mm(inputs, self.w)
-        for _ in range(self.k):
-            inputs = torch.mm(adj, inputs)
+        GraphConvFunction.apply(adj, inputs, self.k)
         outputs = inputs + self.b
 
         if self.relu is not None:
             outputs = self.relu(outputs)
         return outputs
 
+    def extra_repr(self):
+        # (Optional)Set the extra information about this module. You can test
+        # it by printing an object of this class.
+        return '(k): {}'.format(self.k)
 
 class GCN(nn.Module):
 
@@ -74,7 +104,7 @@ class GCN(nn.Module):
             c = int(c)
 
             i += 1
-            conv = GraphConv(last_c, c, dropout=dropout)
+            conv = GraphConv(last_c, c, dropout=dropout, k=k)
             self.add_module('conv{}'.format(i), conv)
             layers.append(conv)
 
