@@ -6,9 +6,9 @@ import os.path as osp
 import torch
 import torch.nn.functional as F
 
-from utils import ensure_path, set_gpu, l2_loss
+from utils import ensure_path, set_gpu, l2_loss, config_logger
 from models.gcn import GCN
-
+import logging
 
 def save_checkpoint(name):
     torch.save(gcn.state_dict(), osp.join(save_path, name + '.pth'))
@@ -34,7 +34,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--no-pred', action='store_true')
     args = parser.parse_args()
-    print(args)
 
     set_gpu(args.gpu)
 
@@ -42,6 +41,8 @@ if __name__ == '__main__':
     save_path += '-k={}'.format(args.k)
     save_path = osp.join('save', args.trainval, save_path)
     ensure_path(save_path)
+    config_logger(save_path+'/train.log')
+    logging.info(args)
 
     graph = json.load(open('materials/imagenet-induced-graph.json', 'r'))
     wnids = graph['wnids']
@@ -63,18 +64,18 @@ if __name__ == '__main__':
 
     hidden_layers = 'd2048,d'
     gcn = GCN(n, edges, word_vectors.shape[1], fc_vectors.shape[1], hidden_layers, k=args.k).cuda()
-    print(gcn)
-    print('{} nodes, {} edges'.format(n, len(edges)))
-    print('word vectors:', word_vectors.shape)
-    print('fc vectors:', fc_vectors.shape)
-    print('hidden layers:', hidden_layers)
+    logging.info(gcn)
+    logging.info('{} nodes, {} edges'.format(n, len(edges)))
+    logging.info('word vectors: {}'.format(word_vectors.shape))
+    logging.info('fc vectors: {}'.format(fc_vectors.shape))
+    logging.info('hidden layers: {}'.format(hidden_layers))
 
     optimizer = torch.optim.Adam(gcn.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     v_train, v_val = map(float, args.trainval.split(','))
     n_trainval = len(fc_vectors)
     n_train = round(n_trainval * (v_train / (v_train + v_val)))
-    print('num train: {}, num val: {}'.format(n_train, n_trainval - n_train))
+    logging.info('num train: {}, num val: {}'.format(n_train, n_trainval - n_train))
     tlist = list(range(len(fc_vectors)))
     random.shuffle(tlist)
 
@@ -102,7 +103,7 @@ if __name__ == '__main__':
         else:
             val_loss = 0
             loss = train_loss
-        print('epoch {}, train_loss={:.4f}, val_loss={:.4f}'
+        logging.debug('epoch {}, train_loss={:.4f}, val_loss={:.4f}'
               .format(epoch, train_loss, val_loss))
 
         trlog['train_loss'].append(train_loss)
@@ -111,6 +112,8 @@ if __name__ == '__main__':
         torch.save(trlog, osp.join(save_path, 'trlog'))
 
         if (epoch % args.save_epoch == 0):
+            logging.INFO('epoch {}, train_loss={:.4f}, val_loss={:.4f}'
+                  .format(epoch, train_loss, val_loss))
             if args.no_pred:
                 pred_obj = None
             else:

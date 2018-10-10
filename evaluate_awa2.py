@@ -7,8 +7,8 @@ from torch.utils.data import DataLoader
 
 from models.resnet import make_resnet50_base
 from datasets.image_folder import ImageFolder
-from utils import set_gpu, pick_vectors
-
+from utils import set_gpu, pick_vectors, config_logger
+import logging
 
 def test_on_subset(dataset, cnn, n, pred_vectors, all_label,
                    consider_trains):
@@ -49,14 +49,18 @@ if __name__ == '__main__':
     parser.add_argument('--output', default=None)
     args = parser.parse_args()
 
+    config_logger(args.pred+'.awa2.log')
+
     set_gpu(args.gpu)
 
     awa2_split = json.load(open('materials/awa2-split.json', 'r'))
     train_wnids = awa2_split['train']
     test_wnids = awa2_split['test']
 
-    print('train: {}, test: {}'.format(len(train_wnids), len(test_wnids)))
-    print('consider train classifiers: {}'.format(args.consider_trains))
+    logging.info('pred: {}'.format(args.pred))
+    logging.info('cnn: {}'.format(args.cnn))
+    logging.info('train: {}, test: {}'.format(len(train_wnids), len(test_wnids)))
+    logging.info('consider train classifiers: {}'.format(args.consider_trains))
 
     pred_file = torch.load(args.pred)
     pred_wnids = pred_file['wnids']
@@ -89,11 +93,11 @@ if __name__ == '__main__':
         ave_acc += acc
         ave_acc_n += 1
 
-        print('{} {}: {:.2f}%'.format(i, name.replace('+', ' '), acc * 100))
+        logging.debug('{} {}: {:.2f}%'.format(i, name.replace('+', ' '), acc * 100))
         
         results[name] = acc
 
-    print('summary: {:.2f}%'.format(ave_acc / ave_acc_n * 100))
+    logging.info('summary: {:.2f}%'.format(ave_acc / ave_acc_n * 100))
 
     if args.output is not None:
         json.dump(results, open(args.output, 'w'))
