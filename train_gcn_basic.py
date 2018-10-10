@@ -27,18 +27,20 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--weight-decay', type=float, default=0.0005)
     parser.add_argument('--save-epoch', type=int, default=300)
-    parser.add_argument('--save-path', default='save/gcn-basic')
+    parser.add_argument('--save-path', default='gcn-basic')
     parser.add_argument('--k', type=int, default=1)
 
     parser.add_argument('--gpu', default='0')
 
     parser.add_argument('--no-pred', action='store_true')
     args = parser.parse_args()
+    print(args)
 
     set_gpu(args.gpu)
 
     save_path = args.save_path
     save_path += '-k={}'.format(args.k)
+    save_path = osp.join('save', args.trainval, save_path)
     ensure_path(save_path)
 
     graph = json.load(open('materials/imagenet-induced-graph.json', 'r'))

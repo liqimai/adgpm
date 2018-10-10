@@ -13,7 +13,7 @@ def ensure_path(path):
             shutil.rmtree(path)
             os.mkdir(path)
     else:
-        os.mkdir(path)
+        os.makedirs(path)
 
 
 def set_gpu(gpu):
