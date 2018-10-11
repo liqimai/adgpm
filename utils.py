@@ -6,6 +6,22 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 
+import logging
+
+def config_logger(logfile, format='%(asctime)s %(filename)s %(lineno)s [%(levelname)s]: %(message)s'):
+    logFormatter = logging.Formatter(format)
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(logging.DEBUG)
+
+    fileHandler = logging.FileHandler(logfile)
+    fileHandler.setFormatter(logFormatter)
+    fileHandler.setLevel(logging.DEBUG)
+    rootLogger.addHandler(fileHandler)
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    consoleHandler.setLevel(logging.INFO)
+    rootLogger.addHandler(consoleHandler)
 
 def ensure_path(path):
     if osp.exists(path):

@@ -8,7 +8,8 @@ from torch.utils.data import DataLoader
 
 from models.resnet import make_resnet50_base
 from datasets.imagenet import ImageNet
-from utils import set_gpu, pick_vectors
+from utils import set_gpu, pick_vectors, config_logger
+import logging
 
 
 def test_on_subset(dataset, cnn, n, pred_vectors, all_label,
@@ -61,16 +62,18 @@ if __name__ == '__main__':
     parser.add_argument('--test-train', action='store_true')
 
     args = parser.parse_args()
-
+    config_logger(args.pred+'.'+args.test_set+'.log')
     set_gpu(args.gpu)
 
     test_sets = json.load(open('materials/imagenet-testsets.json', 'r'))
     train_wnids = test_sets['train']
     test_wnids = test_sets[args.test_set]
 
-    print('test set: {}, {} classes, ratio={}'
+    logging.info('pred: {}'.format(args.pred))
+    logging.info('cnn: {}'.format(args.cnn))
+    logging.info('test set: {}, {} classes, ratio={}'
           .format(args.test_set, len(test_wnids), args.keep_ratio))
-    print('consider train classifiers: {}'.format(args.consider_trains))
+    logging.info('consider train classifiers: {}'.format(args.consider_trains))
 
     pred_file = torch.load(args.pred)
     pred_wnids = pred_file['wnids']
@@ -109,11 +112,11 @@ if __name__ == '__main__':
             s_hits += hits
             s_tot += tot
 
-            print('{}/{}, {}:'.format(i, len(train_wnids), wnid), end=' ')
+            msg = '{}/{}, {}: '.format(i, len(train_wnids), wnid)
             for i in range(len(hits)):
-                print('{:.0f}%({:.2f}%)'
-                      .format(hits[i] / tot * 100, s_hits[i] / s_tot * 100), end=' ')
-            print('x{}({})'.format(tot, s_tot))
+                msg += '{:.0f}%({:.2f}%) '.format(hits[i] / tot * 100, s_hits[i] / s_tot * 100)
+            msg += 'x{}({})'.format(tot, s_tot)
+            logging.debug(msg)
     else:
         for i, wnid in enumerate(test_wnids, 1):
             subset = dataset.get_subset(wnid)
@@ -124,16 +127,17 @@ if __name__ == '__main__':
             s_hits += hits
             s_tot += tot
 
-            print('{}/{}, {}:'.format(i, len(test_wnids), wnid), end=' ')
+            msg = '{}/{}, {}: '.format(i, len(test_wnids), wnid)
             for i in range(len(hits)):
-                print('{:.0f}%({:.2f}%)'
-                      .format(hits[i] / tot * 100, s_hits[i] / s_tot * 100), end=' ')
-            print('x{}({})'.format(tot, s_tot))
-
-    print('summary:', end=' ')
+                msg += '{:.0f}%({:.2f}%) '.format(hits[i] / tot * 100, s_hits[i] / s_tot * 100)
+            msg += 'x{}({})'.format(tot, s_tot)
+            logging.debug(msg)
+    msg = 'summary: '
     for s_hit in s_hits:
-        print('{:.2f}%'.format(s_hit / s_tot * 100), end=' ')
-    print('total {}'.format(s_tot))
+        msg += '{:.2f}% '.format(s_hit / s_tot * 100)
+    msg += 'total {} '.format(s_tot)
+    msg += 'for pred {}'.format(args.pred)
+    logging.info(msg)
 
     if args.output is not None:
         json.dump(results, open(args.output, 'w'))
