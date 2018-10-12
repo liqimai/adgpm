@@ -75,7 +75,7 @@ class GraphConv(nn.Module):
 
 class GCN(nn.Module):
 
-    def __init__(self, n, edges, in_channels, out_channels, hidden_layers, k=1):
+    def __init__(self, n, edges, in_channels, out_channels, hidden_layers, ks):
         super().__init__()
 
         edges = np.array(edges)
@@ -95,7 +95,7 @@ class GCN(nn.Module):
         i = 0
         layers = []
         last_c = in_channels
-        for c in hl:
+        for c, k in zip(hl, ks):
             if c[0] == 'd':
                 dropout = True
                 c = c[1:]
@@ -110,7 +110,7 @@ class GCN(nn.Module):
 
             last_c = c
 
-        conv = GraphConv(last_c, out_channels, relu=False, dropout=dropout_last, k=k)
+        conv = GraphConv(last_c, out_channels, relu=False, dropout=dropout_last, k=ks[-1])
         self.add_module('conv-last', conv)
         layers.append(conv)
 
