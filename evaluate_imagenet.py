@@ -60,9 +60,10 @@ if __name__ == '__main__':
     parser.add_argument('--keep-ratio', type=float, default=0.1)
     parser.add_argument('--consider-trains', action='store_true')
     parser.add_argument('--test-train', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
 
     args = parser.parse_args()
-    config_logger(args.pred+'.'+args.test_set+'.log')
+    config_logger(args.pred+'.'+args.test_set+'.log', verbose=args.verbose)
     set_gpu(args.gpu)
 
     test_sets = json.load(open('materials/imagenet-testsets.json', 'r'))

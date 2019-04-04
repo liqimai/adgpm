@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from utils import ensure_path, set_gpu, l2_loss, config_logger
 from models.gcn_dense import GCN_Dense
 import logging
+import time
 
 def save_checkpoint(name):
     torch.save(gcn.state_dict(), osp.join(save_path, name + '.pth'))
@@ -69,12 +70,23 @@ if __name__ == '__main__':
 
     optimizer = torch.optim.Adam(gcn.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-    v_train, v_val = map(float, args.trainval.split(','))
-    n_trainval = len(fc_vectors)
-    n_train = round(n_trainval * (v_train / (v_train + v_val)))
-    logging.info('num train: {}, num val: {}'.format(n_train, n_trainval - n_train))
-    tlist = list(range(len(fc_vectors)))
-    random.shuffle(tlist)
+    if args.trainval == 'awa2':
+        awa2_split = json.load(open('materials/awa2-split.json', 'r'))
+        train_wnids = awa2_split['train']
+        test_wnids = awa2_split['test']
+
+        wnid_dic = dict(zip(wnids, range(len(wnids))))
+        tlist = [wnid_dic[wnid] for wnid in train_wnids if wnid_dic[wnid] < 1000]
+        v_val = 0
+    else:
+        v_train, v_val = map(float, args.trainval.split(','))
+        n_trainval = len(fc_vectors)
+        n_train = round(n_trainval * (v_train / (v_train + v_val)))
+        logging.info('num train: {}, num val: {}'.format(n_train, n_trainval - n_train))
+        tlist = list(range(len(fc_vectors)))
+        if args.seed != -1:
+            random.shuffle(tlist)
+        tlist, vlist = tlist[:n_train], tlist[n_train:]
 
     min_loss = 1e18
 
@@ -82,26 +94,30 @@ if __name__ == '__main__':
     trlog['train_loss'] = []
     trlog['val_loss'] = []
     trlog['min_loss'] = 0
+    train_time = 0
 
     for epoch in range(1, args.max_epoch + 1):
         gcn.train()
+        step_time = time.time()
         output_vectors = gcn(word_vectors)
-        loss = mask_l2_loss(output_vectors, fc_vectors, tlist[:n_train])
+        loss = mask_l2_loss(output_vectors, fc_vectors, tlist)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        step_time = time.time() - step_time
+        train_time += step_time
 
         gcn.eval()
         output_vectors = gcn(word_vectors)
-        train_loss = mask_l2_loss(output_vectors, fc_vectors, tlist[:n_train]).item()
+        train_loss = mask_l2_loss(output_vectors, fc_vectors, tlist).item()
         if v_val > 0:
-            val_loss = mask_l2_loss(output_vectors, fc_vectors, tlist[n_train:]).item()
+            val_loss = mask_l2_loss(output_vectors, fc_vectors, vlist).item()
             loss = val_loss
         else:
             val_loss = 0
             loss = train_loss
-        logging.debug('epoch {}, train_loss={:.4f}, val_loss={:.4f}'
-              .format(epoch, train_loss, val_loss))
+        logging.debug('epoch {}, train_loss={:.4f}, val_loss={:.4f}, step_time={:.4f}'
+              .format(epoch, train_loss, val_loss, step_time))
 
         trlog['train_loss'].append(train_loss)
         trlog['val_loss'].append(val_loss)
@@ -109,8 +125,8 @@ if __name__ == '__main__':
         torch.save(trlog, osp.join(save_path, 'trlog'))
 
         if (epoch % args.save_epoch == 0):
-            logging.info('epoch {}, train_loss={:.4f}, val_loss={:.4f}'
-                  .format(epoch, train_loss, val_loss))
+            logging.info('epoch {}, train_loss={:.4f}, val_loss={:.4f}, train_time={:.4f}'
+                  .format(epoch, train_loss, val_loss, train_time))
             if args.no_pred:
                 pred_obj = None
             else:

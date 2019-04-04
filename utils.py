@@ -8,7 +8,7 @@ import torch
 
 import logging
 
-def config_logger(logfile, format='%(asctime)s %(filename)s %(lineno)s [%(levelname)s]: %(message)s'):
+def config_logger(logfile, format='%(asctime)s %(filename)s %(lineno)s [%(levelname)s]: %(message)s', verbose=False):
     logFormatter = logging.Formatter(format)
     rootLogger = logging.getLogger()
     rootLogger.setLevel(logging.DEBUG)
@@ -20,7 +20,7 @@ def config_logger(logfile, format='%(asctime)s %(filename)s %(lineno)s [%(leveln
 
     consoleHandler = logging.StreamHandler()
     consoleHandler.setFormatter(logFormatter)
-    consoleHandler.setLevel(logging.INFO)
+    consoleHandler.setLevel(logging.INFO if not verbose else logging.DEBUG)
     rootLogger.addHandler(consoleHandler)
 
 def ensure_path(path):

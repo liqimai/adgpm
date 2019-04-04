@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 
 from PIL import Image
 from torchvision import get_image_backend
-
+import logging
 
 class ImageNet():
 
@@ -35,6 +35,9 @@ class ImageNetSubset(Dataset):
                 try:
                     img = Image.open(f)
                 except OSError:
+                    return None
+                except Exception as e:
+                    logging.debug(str(e)+'when load "{}".'.format(path))
                     return None
                 return img.convert('RGB')
 

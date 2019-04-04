@@ -37,8 +37,12 @@ class ImageFolder(Dataset):
     def __getitem__(self, i):
         path, label = self.data[i]
         image = Image.open(path).convert('RGB')
+        # try:
+        #     transforms.Resize(256)(image).save(path)
+        # except Exception as e:
+        #     print(e, path)
         image = self.transforms(image)
         if image.shape[0] != 3 or image.shape[1] != 224 or image.shape[2] != 224:
             print('you should delete this guy:', path)
-        return image, label
+        return path, image, label
 
