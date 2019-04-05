@@ -8,7 +8,7 @@ import torch
 
 import logging
 
-def config_logger(logfile, format='%(asctime)s %(filename)s %(lineno)s [%(levelname)s]: %(message)s', verbose=False):
+def config_logger(logfile, format='[%(levelname)s] %(asctime)s %(filename)s %(lineno)s: %(message)s', verbose=False):
     logFormatter = logging.Formatter(format)
     rootLogger = logging.getLogger()
     rootLogger.setLevel(logging.DEBUG)
