@@ -1,9 +1,21 @@
 # Attentive Dense Graph Propagation Module
 
-The code for the paper [Rethinking Knowledge Graph Propagation for Zero-Shot Learning](https://arxiv.org/abs/1805.11724).
+This repository is forked from https://github.com/cyvius96/adgpm, the implementation of GPM, DGPM, ADGPM model in the paper [Rethinking Knowledge Graph Propagation for Zero-Shot Learning](https://arxiv.org/abs/1805.11724).
+
+We added a new model GLP (Label Efficient Semi-Supervised Learning via Graph Filtering, CVPR19). 
 
 ### Citation
 ```
+GLP:
+@inproceedings{li2019label,
+  title={Label Efficient Semi-Supervised Learning via Graph Filtering},
+  author={Qimai Li and Xiao-Ming Wu and Han Liu and Xiaotong Zhang and Zhichao Guan},
+  booktitle={Conference on Computer Vision and Pattern Recognition},
+  year={2019},
+  url={https://arxiv.org/abs/1901.09993},
+}
+
+GPM,DGPM,ADGPM:
 @ARTICLE{2018arXiv180511724K,
    author = {{Kampffmeyer}, M. and {Chen}, Y. and {Liang}, X. and {Wang}, H. and 
 	{Zhang}, Y. and {Xing}, E.~P.},
@@ -25,6 +37,8 @@ archivePrefix = "arXiv",
 * python 3
 * pytorch 0.4.0
 * nltk
+
+Anaconda is recommended. 
 
 ## Instructions
 
@@ -49,11 +63,13 @@ There is a folder `materials/`, which contains some meta data and programs alrea
 
 #### ImageNet and AwA2
 
-Download ImageNet and AwA2, create the softlinks (command `ln -s`): `materials/datasets/imagenet` and `materials/datasets/awa2`, to the root directory of the dataset.
+Download ImageNet and AwA2, create the soft-links (command `ln -s`): `materials/datasets/imagenet` and `materials/datasets/awa2`, to the root directory of the dataset.
 
 An ImageNet root directory should contain image folders, each folder with the wordnet id of the class.
 
 An AwA2 root directory should contain the folder JPEGImages.
+
+See https://github.com/JudyYe/zero-shot-gcn/blob/master/DATASET.md
 
 ### Training
 
@@ -62,7 +78,8 @@ Make a directory `save/` for saving models.
 In most programs, use `--gpu` to specify the devices to run the code (default: use gpu 0).
 
 #### Train GCN
-* GPM: Run `python train_gcn_basic.py`, get results in `save/gcn-basic`
+* GLP: Run `python train_glp.py`, get results in `save/glp-k={}`
+* GPM: Run `python train_gcn_basic.py`, get results in `save/gcn-basic-k={}`
 * DGPM: Run `python train_gcn_dense.py`, get results in `save/gcn-dense`
 * ADGPM: Run `python train_gcn_dense_att.py`, get results in `save/gcn-dense-att`
 
