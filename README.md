@@ -10,7 +10,7 @@ GLP:
 @inproceedings{li2019label,
   title={Label Efficient Semi-Supervised Learning via Graph Filtering},
   author={Qimai Li and Xiao-Ming Wu and Han Liu and Xiaotong Zhang and Zhichao Guan},
-  booktitle={Conference on Computer Vision and Pattern Recognition},
+  booktitle={IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
   year={2019},
   url={https://arxiv.org/abs/1901.09993},
 }
